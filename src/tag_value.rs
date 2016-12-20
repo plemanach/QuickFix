@@ -83,12 +83,10 @@ mod test {
 
   #[test]
   fn new_test()  {
-
     
     let value = "A".as_bytes();
     let tag_value = TagValue::new(Tag::HopRefID, value);
     assert!(tag_value.len() == 5)
-
   }
 
   #[test]
@@ -102,7 +100,6 @@ mod test {
     };
 
     assert!(res == "ok");
-     
   }
 
 
