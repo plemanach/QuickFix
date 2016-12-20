@@ -1,0 +1,8 @@
+[package]
+name = "quickfix"
+version = "0.1.0"
+authors = ["Le Manach Patrice <plemanach@hotmail.com>"]
+
+[dependencies]
+enum_primitive="*"
+num="*"
