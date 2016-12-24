@@ -38,7 +38,7 @@ impl TagValue {
 
     if sep_index == usize::max_value() {
 
-      return Err(String::from("TagValue.parse: '=' not found"))
+      return Err("TagValue.parse: '=' not found".to_string())
     }
 
 
@@ -47,13 +47,11 @@ impl TagValue {
     let tag_num = tag_numstring.parse::<i32>().unwrap();
     let value_bytes = (&tag_string[(sep_index + 1)..]).as_bytes();
 
-    let error: String = format!("Unknown tag number {}", tag_num);
-
-
+   
     let tag_val = match Tag::from_number(tag_num) {
 
         Some(tag) => tag,
-        None => return Err(error)
+        None => return Err(format!("Unknown tag number {}", tag_num))
     };
 
     let mut bytes: Vec<u8> = vec![];
@@ -95,11 +93,13 @@ mod test {
     let value = "35=A".as_bytes();
     let result = TagValue::parse(value);
     let res = match result {
-      Err(er) => er,
-      _ => String::from("ok")
+       Err(ref er) => false,
+      _ =>  true
     };
 
-    assert!(res == "ok");
+    assert!(res == true);
+    assert!("A" == String::from_utf8(result.unwrap().value).unwrap());
+   
   }
 
 
