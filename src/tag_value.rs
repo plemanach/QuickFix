@@ -3,7 +3,7 @@ use std::*;
 
 pub struct TagValue {
   
-  tag: Tag,
+  pub tag: Tag,
   pub value: Vec<u8>,
   bytes: Vec<u8>
 }
@@ -81,7 +81,6 @@ mod test {
 
   #[test]
   fn new_test()  {
-    
     let value = "A".as_bytes();
     let tag_value = TagValue::new(Tag::HopRefID, value);
     assert!(tag_value.len() == 5)
@@ -89,7 +88,6 @@ mod test {
 
   #[test]
   fn parse_test()  {
-
     let value = "35=A".as_bytes();
     let result = TagValue::parse(value);
     let res = match result {
@@ -99,7 +97,6 @@ mod test {
 
     assert!(res == true);
     assert!("A" == String::from_utf8(result.unwrap().value).unwrap());
-   
   }
 
 
