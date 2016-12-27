@@ -8,7 +8,7 @@ struct Field {
 
 impl Field {
 
-  fn fieldTag(&self) -> Tag{
+  fn field_tag(&self) -> Tag{
 
       self.field[0].tag
   }
