@@ -58,4 +58,15 @@ impl FieldMap {
       self.tag_lookup = HashMap::new();
       self.tag_sort.compare = ordering;
     }
+
+    fn tags(&self) -> Vec<&Field> {
+
+        let mut fields:Vec<&Field> = vec![];
+
+        for field in self.tag_lookup.values() {
+            fields.push(field);
+        }
+
+        return fields;
+    }
 }
