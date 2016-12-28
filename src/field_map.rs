@@ -69,4 +69,30 @@ impl FieldMap {
 
         return fields;
     }
+
+    fn add(&mut self, f:Field) {
+
+      let tag = f.field_tag();
+
+      if !self.tag_lookup.contains_key(&tag) {
+          self.tag_lookup.insert(tag, f);
+          self.tag_sort.tags.push(tag);
+      } else {
+          *self.tag_lookup.entry(tag).or_insert(Field{field:vec![]}) = f;
+      }
+
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*; 
+
+    #[test]
+    fn add_test() {
+
+      
+    }
+
 }
