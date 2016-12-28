@@ -2,7 +2,7 @@ use num::FromPrimitive;
 
 
 enum_from_primitive! {
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[allow(dead_code)]
 pub enum  Tag {
   BeginString             = 8,

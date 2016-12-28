@@ -35,10 +35,27 @@ impl TagSort {
         self.tags[i] = self.tags[j];
         self.tags[j] = self.tags[i];
     }
-    //fn less(&self, i:isize, j:isize) -> bool { self.tags[i]. }
+
+    fn less(&self, i:usize, j:usize) -> bool { self.tags[i].eq(&self.tags[j]) }
 }
 
 struct FieldMap  {
     tag_lookup: HashMap<Tag, Field>,
     tag_sort: TagSort
+}
+
+impl FieldMap {
+
+    // ascending tags
+    fn normal_field_order(i:Tag, j:Tag) -> bool { i < j }
+
+    fn init(&mut self) {
+
+        self.init_with_ordering(FieldMap::normal_field_order);
+    }
+
+    fn init_with_ordering(&mut self, ordering:TagOrder) {
+      self.tag_lookup = HashMap::new();
+      self.tag_sort.compare = ordering;
+    }
 }
