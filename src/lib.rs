@@ -3,6 +3,8 @@ extern crate num;
 mod tag;
 mod tag_value;
 mod field_map;
+mod field;
+mod error;
 
 #[cfg(test)]
 mod tests {
