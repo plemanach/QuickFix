@@ -4,6 +4,7 @@ use tag_value::*;
 use std::collections::*;
 use field::*;
 use error::error::MessageRejectError;
+use fix_string::*;
 
 pub struct Field {
      field: Vec<TagValue>
@@ -86,16 +87,33 @@ impl FieldMap {
         }
     }
 
-    fn get_field(&self, tag:Tag, parser:FieldValueReader) -> Result<(),MessageRejectError> {
-        let field = match self.tag_lookup.get(tag) {
+    fn get_field<T>(&self, tag:Tag,  parser: &mut T)-> Result<(),MessageRejectError> where T: FieldValueReader {
+        let mut field = match self.tag_lookup.get(&tag) {
             Some(f) => f,
-            None => return MessageRejectError::conditionally_required_field_missing(tag)
+            None => return Err(MessageRejectError::conditionally_required_field_missing(tag))
         };
 
-        match parser.Read(field[0].value) {
-            Err(_)  => return  MessageRejectError::incorrect_data_format_for_value(tag),
-            _ => Ok()
+        match parser.read(field.field[0].value.as_ref()) {
+            Err(_)  => return Err(MessageRejectError::incorrect_data_format_for_value(tag)),
+            _ => Ok(())
         }
+    }
+
+    //Get parses out a field in this FieldMap. Returned reject may indicate the field is not present, or the field value is invalid.
+    fn get<T>(&self, parser: &mut T) -> Result<(),MessageRejectError> where T: FieldInterface {
+        return self.get_field(parser.tag(), parser)
+    }
+
+    fn get_string(&self, tag:Tag) -> Result<String, MessageRejectError> {
+        let mut value = FixString::new();
+        {
+            let value_mutable = &mut value;
+            match self.get_field(tag, value_mutable) {
+                Err(e) => return Err(e),
+                _ => true
+            };
+        }
+        Ok(value.into())
     }
 }
 
@@ -113,5 +131,14 @@ mod test {
         field_map.add(Field{field: vec![tag_value]});
         let field_count = field_map.tags().len();
         assert_eq!(1, field_count);
+    }
+    #[test]
+    fn get_string_test() {
+
+        let mut field_map = FieldMap::new();
+        let expected_value= "blahblah".as_bytes();
+        let tag_value = TagValue::new(Tag::BeginString, expected_value);
+        field_map.add(Field{field: vec![tag_value]});
+        assert_eq!("blahblah", field_map.get_string(Tag::BeginString).unwrap());
     }
 }

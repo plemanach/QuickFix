@@ -5,6 +5,7 @@ mod tag_value;
 mod field_map;
 mod field;
 mod error;
+mod fix_string;
 
 #[cfg(test)]
 mod tests {

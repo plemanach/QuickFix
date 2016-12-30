@@ -1,5 +1,7 @@
 use num::FromPrimitive;
-
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result;
 
 enum_from_primitive! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -65,19 +67,15 @@ pub enum  Tag {
 impl Tag {
 
   pub fn from_number(num:i32) -> Option<Tag> {
-
     Tag::from_i32(num)
   }
 
-  pub fn to_num(self) -> u16 {
-
-    self as u16
+  pub fn to_num(&self) -> u16 {
+    *self as u16
   }
   
-  fn is_trailer(self) -> bool {
-
-    match self {
-
+  fn is_trailer(&self) -> bool {
+    match *self {
       Tag::SignatureLength => true,
       Tag::Signature => true,
       Tag::CheckSum => true,
@@ -85,9 +83,8 @@ impl Tag {
     }
   }
 
-  fn is_header(self) -> bool {
-
-      match self {
+  fn is_header(&self) -> bool {
+      match *self {
         Tag::BeginString  => true,
         Tag::BodyLength  => true,
         Tag::MsgType => true,
@@ -125,6 +122,12 @@ impl Tag {
         _ => false
       }
   }
+}
+
+impl Display for Tag {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "({})", *self)
+    }
 }
 
 #[cfg(test)]
