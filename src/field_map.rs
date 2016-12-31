@@ -5,6 +5,7 @@ use std::collections::*;
 use field::*;
 use error::error::MessageRejectError;
 use fix_string::*;
+use fix_boolean::*;
 
 pub struct Field {
      field: Vec<TagValue>
@@ -105,7 +106,19 @@ impl FieldMap {
     }
 
     fn get_string(&self, tag:Tag) -> Result<String, MessageRejectError> {
-        let mut value = FixString::new();
+        let mut value = FIXString::new();
+        {
+            let value_mutable = &mut value;
+            match self.get_field(tag, value_mutable) {
+                Err(e) => return Err(e),
+                _ => true
+            };
+        }
+        Ok(value.into())
+    }
+
+    fn get_boolean(&self, tag:Tag) -> Result<bool, MessageRejectError> {
+        let mut value = FIXBoolean::new();
         {
             let value_mutable = &mut value;
             match self.get_field(tag, value_mutable) {
@@ -134,11 +147,26 @@ mod test {
     }
     #[test]
     fn get_string_test() {
-
         let mut field_map = FieldMap::new();
         let expected_value= "blahblah".as_bytes();
         let tag_value = TagValue::new(Tag::BeginString, expected_value);
         field_map.add(Field{field: vec![tag_value]});
         assert_eq!("blahblah", field_map.get_string(Tag::BeginString).unwrap());
+    }
+    #[test]
+    fn get_string_true_test() {
+        let mut field_map = FieldMap::new();
+        let expected_value= "Y".as_bytes();
+        let tag_value = TagValue::new(Tag::PossDupFlag, expected_value);
+        field_map.add(Field{field: vec![tag_value]});
+        assert_eq!(true, field_map.get_boolean(Tag::PossDupFlag).unwrap());
+    }
+    #[test]
+    fn get_string_false_test() {
+        let mut field_map = FieldMap::new();
+        let expected_value= "N".as_bytes();
+        let tag_value = TagValue::new(Tag::PossDupFlag, expected_value);
+        field_map.add(Field{field: vec![tag_value]});
+        assert_eq!(false, field_map.get_boolean(Tag::PossDupFlag).unwrap());
     }
 }

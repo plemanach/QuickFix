@@ -2,14 +2,14 @@ use std::*;
 use field::*;
 use error::FixError;
 
-pub struct FixString {
+pub struct FIXString {
     value: String
 }
 
-impl FixString {
-    pub fn new() -> FixString
+impl FIXString {
+    pub fn new() -> FIXString
     {
-        FixString{value: String::new()}
+        FIXString{value: String::new()}
     }
 
     pub fn as_str(&self) -> &str {
@@ -21,7 +21,7 @@ impl FixString {
     }
 }
 
-impl FieldValueReader for FixString {
+impl FieldValueReader for FIXString {
     fn read(&mut self, value: &[u8]) -> Result<(), FixError> {
         let mut values: Vec<u8> = vec![];
         values.extend(value.iter().cloned());
@@ -34,7 +34,7 @@ impl FieldValueReader for FixString {
     }
 }
 
-impl FieldValueWriter for FixString {
+impl FieldValueWriter for FIXString {
     fn write(&self) -> Vec<u8> {
         self.value.clone().into_bytes()
     }

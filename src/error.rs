@@ -23,16 +23,40 @@ pub enum Reject {
 }
 
 #[derive(Debug)]
+pub struct FixBooleanParseError {
+    description : String,
+    value_parsed: String
+}
+
+impl FixBooleanParseError {
+    pub fn new(value:String) -> FixBooleanParseError {
+        FixBooleanParseError{description: format!("Boolean could not be parsed:{}",value), value_parsed:value}
+    }
+}
+
+impl Error for FixBooleanParseError {
+    fn description(&self) -> &str { self.description.as_str() }
+}
+
+impl std::fmt::Display for FixBooleanParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({})", self.description())
+    }
+}
+
+#[derive(Debug)]
 pub enum FixError {
     Error(fmt::Error),
-    FromUtf8Error(string::FromUtf8Error)
+    FromUtf8Error(string::FromUtf8Error),
+    BooleanParseError(FixBooleanParseError)
 }
 
 impl std::error::Error for FixError {
     fn description(&self) -> &str {
         match *self {
             FixError::Error(ref err) => err.description(),
-            FixError::FromUtf8Error(ref err) => err.description()
+            FixError::FromUtf8Error(ref err) => err.description(),
+            FixError::BooleanParseError(ref err) => err.description(),
         }
     }
 }
@@ -41,7 +65,8 @@ impl std::fmt::Display for FixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             FixError::Error(ref err) => write!(f, "({})", self.description()),
-            FixError::FromUtf8Error(ref err) =>write!(f, "({})", self.description())
+            FixError::FromUtf8Error(ref err) => write!(f, "({})", self.description()),
+            FixError::BooleanParseError(ref err) => write!(f, "({})", self.description())
         }
     }
 }
