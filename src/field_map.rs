@@ -101,6 +101,24 @@ impl FieldMap {
         }
     }
 
+    fn get_or_create(&mut self, tag:Tag) -> &Field
+    {
+        if let Some(f) = self.tag_lookup.get(&tag) {
+            return f;
+        }
+
+        let f = Field::new();
+        self.tag_lookup.insert(tag, f);
+        self.tag_sort.tags.push(tag);
+        self.tag_lookup.get(&tag).unwrap()
+    }
+
+    fn set_bytes(&mut self, tag:Tag, value: &[u8]) -> &mut FieldMap {
+        let mut f = self.get_or_create(tag);
+        f.init_field(tag, value);
+        self
+    }
+
     //Get parses out a field in this FieldMap. Returned reject may indicate the field is not present, or the field value is invalid.
     fn get<T>(&self, parser: &mut T) -> Result<(),MessageRejectError> where T: FieldInterface {
         return self.get_field(parser.tag(), parser)
