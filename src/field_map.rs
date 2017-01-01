@@ -89,6 +89,10 @@ impl FieldMap {
         }
     }
 
+    fn lookup_field(&self, tag:Tag) -> Option<&Field> {
+        self.tag_lookup.get(&tag)
+    }
+
     fn get_field<T>(&self, tag:Tag,  parser: &mut T)-> Result<(),MessageRejectError> where T: FieldValueReader {
         let mut field = match self.tag_lookup.get(&tag) {
             Some(f) => f,
@@ -101,22 +105,22 @@ impl FieldMap {
         }
     }
 
-    fn get_or_create(&mut self, tag:Tag) -> &Field
+    fn get_or_create(&mut self, tag:Tag) -> &mut Field
     {
-        if let Some(f) = self.tag_lookup.get(&tag) {
-            return f;
+        if !self.tag_lookup.contains_key(&tag) {
+            self.tag_lookup.insert(tag, Field::new());
+            self.tag_sort.tags.push(tag);
         }
-
-        let f = Field::new();
-        self.tag_lookup.insert(tag, f);
-        self.tag_sort.tags.push(tag);
-        self.tag_lookup.get(&tag).unwrap()
+        self.tag_lookup.get_mut(&tag).unwrap()
     }
 
-    fn set_bytes(&mut self, tag:Tag, value: &[u8]) -> &mut FieldMap {
+    fn set_field<T:FieldValueWriter>(&mut self, tag:Tag, field: T) {
+        self.set_bytes(tag, field.write().as_ref())
+    }
+
+    fn set_bytes(&mut self, tag:Tag, value: &[u8]) {
         let mut f = self.get_or_create(tag);
         f.init_field(tag, value);
-        self
     }
 
     //Get parses out a field in this FieldMap. Returned reject may indicate the field is not present, or the field value is invalid.
