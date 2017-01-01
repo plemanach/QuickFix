@@ -6,6 +6,7 @@ use field::*;
 use error::error::MessageRejectError;
 use fix_string::*;
 use fix_boolean::*;
+use fix_int::*;
 
 pub struct Field {
      field: Vec<TagValue>
@@ -128,6 +129,18 @@ impl FieldMap {
         }
         Ok(value.into())
     }
+
+    fn get_int(&self, tag:Tag) -> Result<i32, MessageRejectError> {
+        let mut value: i32 = 0;
+        {
+            let value_mutable = &mut value;
+            match self.get_field(tag, value_mutable) {
+                Err(e) => return Err(e),
+                _ => true
+            };
+        }
+        Ok(value)
+    }
 }
 
 #[cfg(test)]
@@ -168,5 +181,21 @@ mod test {
         let tag_value = TagValue::new(Tag::PossDupFlag, expected_value);
         field_map.add(Field{field: vec![tag_value]});
         assert_eq!(false, field_map.get_boolean(Tag::PossDupFlag).unwrap());
+    }
+    #[test]
+    fn get_int_test() {
+        let mut field_map = FieldMap::new();
+        let expected_value= "11".as_bytes();
+        let tag_value = TagValue::new(Tag::MsgSeqNum, expected_value);
+        field_map.add(Field{field: vec![tag_value]});
+        assert_eq!(11, field_map.get_int(Tag::MsgSeqNum).unwrap());
+    }
+    #[test]
+    fn get_negative_int_test() {
+        let mut field_map = FieldMap::new();
+        let expected_value= "-2".as_bytes();
+        let tag_value = TagValue::new(Tag::MsgSeqNum, expected_value);
+        field_map.add(Field{field: vec![tag_value]});
+        assert_eq!(-2, field_map.get_int(Tag::MsgSeqNum).unwrap());
     }
 }

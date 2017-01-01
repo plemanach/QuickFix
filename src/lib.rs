@@ -7,6 +7,7 @@ mod field;
 mod error;
 mod fix_string;
 mod fix_boolean;
+mod fix_int;
 
 #[cfg(test)]
 mod tests {

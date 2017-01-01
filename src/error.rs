@@ -47,6 +47,7 @@ impl std::fmt::Display for FixBooleanParseError {
 #[derive(Debug)]
 pub enum FixError {
     Error(fmt::Error),
+    IntError(std::num::ParseIntError),
     FromUtf8Error(string::FromUtf8Error),
     BooleanParseError(FixBooleanParseError)
 }
@@ -55,6 +56,7 @@ impl std::error::Error for FixError {
     fn description(&self) -> &str {
         match *self {
             FixError::Error(ref err) => err.description(),
+            FixError::IntError(ref err) => err.description(),
             FixError::FromUtf8Error(ref err) => err.description(),
             FixError::BooleanParseError(ref err) => err.description(),
         }
@@ -65,6 +67,7 @@ impl std::fmt::Display for FixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             FixError::Error(ref err) => write!(f, "({})", self.description()),
+            FixError::IntError(ref err) => write!(f, "({})", err.description()),
             FixError::FromUtf8Error(ref err) => write!(f, "({})", self.description()),
             FixError::BooleanParseError(ref err) => write!(f, "({})", self.description())
         }
