@@ -7,6 +7,12 @@ pub struct FIXString {
 }
 
 impl FIXString {
+
+    pub fn new_with_value(value:&str) -> FIXString
+    {
+        FIXString{value: value.to_string()}
+    }
+
     pub fn new() -> FIXString
     {
         FIXString{value: String::new()}

@@ -126,7 +126,7 @@ impl Tag {
 
 impl Display for Tag {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "({})", *self)
+        write!(f, "({})", self.to_num())
     }
 }
 

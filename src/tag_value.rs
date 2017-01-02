@@ -2,12 +2,24 @@ use tag::*;
 use std::*;
 
 pub struct TagValue {
-    pub tag: Tag,
-    pub value: Vec<u8>,
+    tag: Tag,
+    value: Vec<u8>,
     bytes: Vec<u8>
 }
 
 impl TagValue {
+
+    pub fn empty() -> TagValue {
+        TagValue{tag:Tag::BeginString, value:vec![], bytes: vec![]}
+    }
+
+    pub fn tag(&self) -> Tag {
+        self.tag
+    }
+
+    pub fn value(&self) -> &[u8] {
+        self.value.as_ref()
+    }
 
     pub fn new(tag_val: Tag, value: &[u8]) -> TagValue {
         let mut bytes: Vec<u8> = vec![];

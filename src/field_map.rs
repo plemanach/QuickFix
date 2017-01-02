@@ -15,11 +15,11 @@ pub struct Field {
 impl Field {
 
     fn new() -> Field {
-        Field{field:vec![]}
+        Field{field:vec![TagValue::empty()]}
     }
 
     fn field_tag(&self) -> Tag{
-        self.field[0].tag
+        self.field[0].tag()
     }
 
     fn init_field(&mut self, tag:Tag, value:&[u8])
@@ -99,10 +99,17 @@ impl FieldMap {
             None => return Err(MessageRejectError::conditionally_required_field_missing(tag))
         };
 
-        match parser.read(field.field[0].value.as_ref()) {
+        match parser.read(field.field[0].value()) {
             Err(_)  => return Err(MessageRejectError::incorrect_data_format_for_value(tag)),
             _ => Ok(())
         }
+    }
+
+    fn get_bytes(&self, tag:Tag) -> Result<&[u8] ,MessageRejectError> {
+        if !self.tag_lookup.contains_key(&tag) {
+            return Err(MessageRejectError::conditionally_required_field_missing(tag));
+        }
+        Ok(self.tag_lookup.get(&tag).unwrap().field[0].value())
     }
 
     fn get_or_create(&mut self, tag:Tag) -> &mut Field
@@ -121,6 +128,14 @@ impl FieldMap {
     fn set_bytes(&mut self, tag:Tag, value: &[u8]) {
         let mut f = self.get_or_create(tag);
         f.init_field(tag, value);
+    }
+
+    fn set_int(&mut self, tag:Tag, value:i32) {
+        self.set_bytes(tag, value.write().as_ref());
+    }
+
+    fn set_string(&mut self, tag:Tag, value:&str) {
+        self.set_bytes(tag, value.as_ref());
     }
 
     //Get parses out a field in this FieldMap. Returned reject may indicate the field is not present, or the field value is invalid.
@@ -219,5 +234,19 @@ mod test {
         let tag_value = TagValue::new(Tag::MsgSeqNum, expected_value);
         field_map.add(Field{field: vec![tag_value]});
         assert_eq!(-2, field_map.get_int(Tag::MsgSeqNum).unwrap());
+    }
+    #[test]
+    fn typed_set_and_get() {
+        let mut field_map = FieldMap::new();
+
+        let expected_string_1 =  "Sender1";
+        let expected_string_2 =  "Receiver1";
+        field_map.set_string(Tag::SenderCompID, expected_string_1);
+        field_map.set_string(Tag::TargetCompID, expected_string_2);
+
+        assert_eq!(expected_string_1,  field_map.get_string(Tag::SenderCompID).unwrap());
+        assert_eq!(expected_string_2,  field_map.get_string(Tag::TargetCompID).unwrap());
+        //assert!(field_map.get_string(Tag::BodyLength).is_err() == true);
+        let result = field_map.get_string(Tag::BodyLength);
     }
 }
