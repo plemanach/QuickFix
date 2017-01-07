@@ -3,10 +3,99 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result;
 
+#[derive(Debug, Copy, Clone)]
+pub struct Tag {
+  value:u32
+}
+
+impl Display for Tag {
+  fn fmt(&self, f: &mut Formatter) -> Result {
+    write!(f, "({})", self.val())
+  }
+}
+
+impl Tag {
+
+  pub fn new(val:u32) -> Tag {
+    Tag{value:val}
+  }
+
+  pub fn new_with_define_tag(val:Tags) -> Tag {
+    Tag{value:val.to_num()}
+  }
+
+  pub fn val(&self) -> u32 {
+    self.value
+  }
+
+  pub fn val_str(&self) -> String {
+    self.value.to_string()
+  }
+
+  fn is_trailer(&self) -> bool {
+      if let Some(tag) = Tags::from_number(self.value) {
+          let result = match tag {
+            Tags::SignatureLength => true,
+            Tags::Signature => true,
+            Tags::CheckSum => true,
+            _ => false
+          };
+          return result;
+      }
+      false
+  }
+
+  fn is_header(&self) -> bool {
+      if let Some(tag) = Tags::from_number(self.value) {
+          let result = match tag {
+            Tags::BeginString => true,
+            Tags::BodyLength => true,
+            Tags::MsgType => true,
+            Tags::SenderCompID => true,
+            Tags::TargetCompID => true,
+            Tags::OnBehalfOfCompID => true,
+            Tags::DeliverToCompID => true,
+            Tags::SecureDataLen => true,
+            Tags::MsgSeqNum => true,
+            Tags::SenderSubID => true,
+            Tags::SenderLocationID => true,
+            Tags::TargetSubID => true,
+            Tags::TargetLocationID => true,
+            Tags::OnBehalfOfSubID => true,
+            Tags::OnBehalfOfLocationID => true,
+            Tags::DeliverToSubID => true,
+            Tags::DeliverToLocationID => true,
+            Tags::PossDupFlag => true,
+            Tags::PossResend => true,
+            Tags::SendingTime => true,
+            Tags::OrigSendingTime => true,
+            Tags::XMLDataLen => true,
+            Tags::XMLData => true,
+            Tags::MessageEncoding => true,
+            Tags::LastMsgSeqNumProcessed => true,
+            Tags::OnBehalfOfSendingTime => true,
+            Tags::ApplVerID => true,
+            Tags::CstmApplVerID => true,
+            Tags::NoHops => true,
+            Tags::ApplExtID => true,
+            Tags::SecureData => true,
+            Tags::HopCompID => true,
+            Tags::HopSendingTime => true,
+            Tags::HopRefID => true,
+            _ => false
+          };
+          return result;
+    }
+    false
+  }
+}
+
 enum_from_primitive! {
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[allow(dead_code)]
-pub enum  Tag {
+
+pub enum  Tags {
   BeginString             = 8,
   BodyLength              = 9,
   MsgType                 = 35,
@@ -64,69 +153,22 @@ pub enum  Tag {
 }
 }
 
-impl Tag {
 
-  pub fn from_number(num:i32) -> Option<Tag> {
-    Tag::from_i32(num)
+impl Tags {
+
+  pub fn from_number(num:u32) -> Option<Tags> {
+    Tags::from_u32(num)
   }
 
-  pub fn to_num(&self) -> u16 {
-    *self as u16
-  }
-  
-  fn is_trailer(&self) -> bool {
-    match *self {
-      Tag::SignatureLength => true,
-      Tag::Signature => true,
-      Tag::CheckSum => true,
-      _ => false
-    }
-  }
-
-  fn is_header(&self) -> bool {
-      match *self {
-        Tag::BeginString  => true,
-        Tag::BodyLength  => true,
-        Tag::MsgType => true,
-        Tag::SenderCompID => true,
-        Tag::TargetCompID => true,
-        Tag::OnBehalfOfCompID => true,
-        Tag::DeliverToCompID => true,
-        Tag::SecureDataLen => true,
-        Tag::MsgSeqNum => true,
-        Tag::SenderSubID => true,
-        Tag::SenderLocationID => true,
-        Tag::TargetSubID => true,
-        Tag::TargetLocationID => true,
-        Tag::OnBehalfOfSubID => true,
-        Tag::OnBehalfOfLocationID => true,
-        Tag::DeliverToSubID => true,
-        Tag::DeliverToLocationID => true,
-        Tag::PossDupFlag => true,
-        Tag::PossResend => true,
-        Tag::SendingTime => true,
-        Tag::OrigSendingTime => true,
-        Tag::XMLDataLen => true,
-        Tag::XMLData => true,
-        Tag::MessageEncoding => true,
-        Tag::LastMsgSeqNumProcessed => true,
-        Tag::OnBehalfOfSendingTime => true,
-        Tag::ApplVerID => true,
-        Tag::CstmApplVerID => true,
-        Tag::NoHops => true,
-        Tag::ApplExtID => true,
-        Tag::SecureData => true,
-        Tag::HopCompID => true,
-        Tag::HopSendingTime => true,
-        Tag::HopRefID => true,
-        _ => false
-      }
+  pub fn to_num(&self) -> u32 {
+    *self as u32
   }
 }
 
-impl Display for Tag {
+
+impl Display for Tags {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "({})", self.to_num())
+        write!(f, "({})", *self)
     }
 }
 
@@ -137,16 +179,19 @@ mod test {
 
   #[test]
   fn is_trailer_test() {
-      assert!(Tag::CheckSum.is_trailer());
+
+      let tag = Tag::new_with_define_tag(Tags::CheckSum);
+      assert!(tag.is_trailer());
   }
 
   #[test]
   fn is_header_test() {
-      assert!(Tag::HopCompID.is_header());
+      let tag = Tag::new_with_define_tag(Tags::HopCompID);
+      assert!(tag.is_header());
   }
 
   #[test]
   fn to_num_test() {
-      assert!(Tag::CheckSum.to_num() == 10);
+      assert!(Tags::CheckSum.to_num() == 10);
   }
 }
