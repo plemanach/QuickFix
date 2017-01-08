@@ -18,20 +18,20 @@ impl Field {
         Field{field:vec![TagValue::empty()]}
     }
 
-    fn field_tag(&self) -> Tag{
+    fn field_tag(&self) -> u32 {
         self.field[0].tag()
     }
 
-    fn init_field(&mut self, tag:Tag, value:&[u8])
+    fn init_field(&mut self, tag:u32, value:&[u8])
     {
         self.field[0].init(tag, value);
     }
 }
 
-type TagOrder = fn(i:Tag, j:Tag) -> bool;
+type TagOrder = fn(i:u32, j:u32) -> bool;
 
 pub struct TagSort {
-    tags: Vec<Tag>,
+    tags: Vec<u32>,
     compare: TagOrder
 }
 
@@ -45,7 +45,7 @@ impl TagSort {
         self.tags[j] = self.tags[i];
     }
 
-    fn less(&self, i:usize, j:usize) -> bool { self.tags[i].val().eq(&self.tags[j].val()) }
+    fn less(&self, i:usize, j:usize) -> bool { self.tags[i].eq(&self.tags[j]) }
 }
 
 pub struct FieldMap {
@@ -56,7 +56,7 @@ pub struct FieldMap {
 impl FieldMap {
 
     // ascending tags
-    fn normal_field_order(i:Tag, j:Tag) -> bool { i.val() < j.val() }
+    fn normal_field_order(i:u32, j:u32) -> bool { i < j }
 
     fn new() -> FieldMap {
         FieldMap{tag_lookup:HashMap::new(),tag_sort: TagSort{tags: vec![], compare: FieldMap::normal_field_order }}
@@ -81,20 +81,20 @@ impl FieldMap {
 
     fn add(&mut self, f:Field) {
         let tag = f.field_tag();
-        if !self.tag_lookup.contains_key(&tag.val()) {
-            self.tag_lookup.insert(tag.val(), f);
+        if !self.tag_lookup.contains_key(&tag) {
+            self.tag_lookup.insert(tag, f);
             self.tag_sort.tags.push(tag);
         } else {
-            *self.tag_lookup.entry(tag.val()).or_insert(Field::new()) = f;
+            *self.tag_lookup.entry(tag).or_insert(Field::new()) = f;
         }
     }
 
-    fn lookup_field(&self, tag:Tag) -> Option<&Field> {
-        self.tag_lookup.get(&tag.val())
+    fn lookup_field(&self, tag:u32) -> Option<&Field> {
+        self.tag_lookup.get(&tag)
     }
 
-    fn get_field<T>(&self, tag:Tag,  parser: &mut T)-> Result<(),MessageRejectError> where T: FieldValueReader {
-        let mut field = match self.tag_lookup.get(&tag.val()) {
+    fn get_field<T>(&self, tag:u32,  parser: &mut T)-> Result<(),MessageRejectError> where T: FieldValueReader {
+        let mut field = match self.tag_lookup.get(&tag) {
             Some(f) => f,
             None => return Err(MessageRejectError::conditionally_required_field_missing(tag))
         };
@@ -105,36 +105,36 @@ impl FieldMap {
         }
     }
 
-    fn get_bytes(&self, tag:Tag) -> Result<&[u8] ,MessageRejectError> {
-        if !self.tag_lookup.contains_key(&tag.val()) {
+    fn get_bytes(&self, tag:u32) -> Result<&[u8] ,MessageRejectError> {
+        if !self.tag_lookup.contains_key(&tag) {
             return Err(MessageRejectError::conditionally_required_field_missing(tag));
         }
-        Ok(self.tag_lookup.get(&tag.val()).unwrap().field[0].value())
+        Ok(self.tag_lookup.get(&tag).unwrap().field[0].value())
     }
 
-    fn get_or_create(&mut self, tag:Tag) -> &mut Field
+    fn get_or_create(&mut self, tag:u32) -> &mut Field
     {
-        if !self.tag_lookup.contains_key(&tag.val()) {
-            self.tag_lookup.insert(tag.val(), Field::new());
+        if !self.tag_lookup.contains_key(&tag) {
+            self.tag_lookup.insert(tag, Field::new());
             self.tag_sort.tags.push(tag);
         }
-        self.tag_lookup.get_mut(&tag.val()).unwrap()
+        self.tag_lookup.get_mut(&tag).unwrap()
     }
 
-    fn set_field<T:FieldValueWriter>(&mut self, tag:Tag, field: T) {
+    fn set_field<T:FieldValueWriter>(&mut self, tag:u32, field: T) {
         self.set_bytes(tag, field.write().as_ref())
     }
 
-    fn set_bytes(&mut self, tag:Tag, value: &[u8]) {
+    fn set_bytes(&mut self, tag:u32, value: &[u8]) {
         let mut f = self.get_or_create(tag);
         f.init_field(tag, value);
     }
 
-    fn set_int(&mut self, tag:Tag, value:i32) {
+    fn set_int(&mut self, tag:u32, value:i32) {
         self.set_bytes(tag, value.write().as_ref());
     }
 
-    fn set_string(&mut self, tag:Tag, value:&str) {
+    fn set_string(&mut self, tag:u32, value:&str) {
         self.set_bytes(tag, value.as_ref());
     }
 
@@ -143,7 +143,7 @@ impl FieldMap {
         return self.get_field(parser.tag(), parser)
     }
 
-    fn get_string(&self, tag:Tag) -> Result<String, MessageRejectError> {
+    fn get_string(&self, tag:u32) -> Result<String, MessageRejectError> {
         let mut value = FIXString::new();
         {
             let value_mutable = &mut value;
@@ -155,7 +155,7 @@ impl FieldMap {
         Ok(value.into())
     }
 
-    fn get_boolean(&self, tag:Tag) -> Result<bool, MessageRejectError> {
+    fn get_boolean(&self, tag:u32) -> Result<bool, MessageRejectError> {
         let mut value = FIXBoolean::new();
         {
             let value_mutable = &mut value;
@@ -167,7 +167,7 @@ impl FieldMap {
         Ok(value.into())
     }
 
-    fn get_int(&self, tag:Tag) -> Result<i32, MessageRejectError> {
+    fn get_int(&self, tag:u32) -> Result<i32, MessageRejectError> {
         let mut value: i32 = 0;
         {
             let value_mutable = &mut value;
@@ -190,8 +190,7 @@ mod test {
     fn add_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "blahblah".as_bytes();
-        let tag = Tag::new_with_define_tag(Tags::BeginString);
-        let tag_value = TagValue::new(tag, expected_value);
+        let tag_value = TagValue::new(Tags::BeginString.into(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
         let field_count = field_map.tags().len();
         assert_eq!(1, field_count);
@@ -200,41 +199,41 @@ mod test {
     fn get_string_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "blahblah".as_bytes();
-        let tag_value = TagValue::new(Tag::new_with_define_tag(Tags::BeginString), expected_value);
+        let tag_value = TagValue::new(Tags::BeginString.into(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!("blahblah", field_map.get_string(Tag::new_with_define_tag(Tags::BeginString)).unwrap());
+        assert_eq!("blahblah", field_map.get_string(Tags::BeginString.into()).unwrap());
     }
     #[test]
     fn get_string_true_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "Y".as_bytes();
-        let tag_value = TagValue::new(Tag::new_with_define_tag(Tags::PossDupFlag), expected_value);
+        let tag_value = TagValue::new(Tags::PossDupFlag.into(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!(true, field_map.get_boolean(Tag::new_with_define_tag(Tags::PossDupFlag)).unwrap());
+        assert_eq!(true, field_map.get_boolean(Tags::PossDupFlag.into()).unwrap());
     }
     #[test]
     fn get_string_false_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "N".as_bytes();
-        let tag_value = TagValue::new(Tag::new_with_define_tag(Tags::PossDupFlag), expected_value);
+        let tag_value = TagValue::new(Tags::PossDupFlag.to_num(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!(false, field_map.get_boolean(Tag::new_with_define_tag(Tags::PossDupFlag)).unwrap());
+        assert_eq!(false, field_map.get_boolean(Tags::PossDupFlag.to_num()).unwrap());
     }
     #[test]
     fn get_int_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "11".as_bytes();
-        let tag_value = TagValue::new(Tag::new_with_define_tag(Tags::MsgSeqNum), expected_value);
+        let tag_value = TagValue::new(Tags::MsgSeqNum.to_num(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!(11, field_map.get_int(Tag::new_with_define_tag(Tags::MsgSeqNum)).unwrap());
+        assert_eq!(11, field_map.get_int(Tags::MsgSeqNum.to_num()).unwrap());
     }
     #[test]
     fn get_negative_int_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "-2".as_bytes();
-        let tag_value = TagValue::new(Tag::new_with_define_tag(Tags::MsgSeqNum), expected_value);
+        let tag_value = TagValue::new(Tags::MsgSeqNum.to_num(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!(-2, field_map.get_int(Tag::new_with_define_tag(Tags::MsgSeqNum)).unwrap());
+        assert_eq!(-2, field_map.get_int(Tags::MsgSeqNum.to_num()).unwrap());
     }
     #[test]
     fn typed_set_and_get() {
@@ -242,12 +241,12 @@ mod test {
 
         let expected_string_1 =  "Sender1";
         let expected_string_2 =  "Receiver1";
-        field_map.set_string(Tag::new_with_define_tag(Tags::SenderCompID), expected_string_1);
-        field_map.set_string(Tag::new_with_define_tag(Tags::TargetCompID), expected_string_2);
+        field_map.set_string(Tags::SenderCompID.to_num(), expected_string_1);
+        field_map.set_string(Tags::TargetCompID.to_num(), expected_string_2);
 
-        assert_eq!(expected_string_1,  field_map.get_string(Tag::new_with_define_tag(Tags::SenderCompID)).unwrap());
-        assert_eq!(expected_string_2,  field_map.get_string(Tag::new_with_define_tag(Tags::TargetCompID)).unwrap());
+        assert_eq!(expected_string_1,  field_map.get_string(Tags::SenderCompID.to_num()).unwrap());
+        assert_eq!(expected_string_2,  field_map.get_string(Tags::TargetCompID.to_num()).unwrap());
         //assert!(field_map.get_string(Tag::BodyLength).is_err() == true);
-        let result = field_map.get_string(Tag::new_with_define_tag(Tags::BodyLength));
+        let result = field_map.get_string(Tags::BodyLength.to_num());
     }
 }

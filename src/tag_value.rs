@@ -2,7 +2,7 @@ use tag::*;
 use std::*;
 
 pub struct TagValue {
-    tag: Tag,
+    tag: u32,
     value: Vec<u8>,
     bytes: Vec<u8>
 }
@@ -10,10 +10,10 @@ pub struct TagValue {
 impl TagValue {
 
     pub fn empty() -> TagValue {
-        TagValue{tag:Tag::new(0), value:vec![], bytes: vec![]}
+        TagValue{tag:0, value:vec![], bytes: vec![]}
     }
 
-    pub fn tag(&self) -> Tag {
+    pub fn tag(&self) -> u32 {
         self.tag
     }
 
@@ -21,9 +21,9 @@ impl TagValue {
         self.value.as_ref()
     }
 
-    pub fn new(tag_val: Tag, value: &[u8]) -> TagValue {
+    pub fn new(tag_val: u32, value: &[u8]) -> TagValue {
         let mut bytes: Vec<u8> = vec![];
-        bytes.extend(tag_val.val_str().as_bytes().iter().cloned());
+        bytes.extend(tag_val.to_string().as_bytes().iter().cloned());
         bytes.extend("=".as_bytes().iter().cloned());
         bytes.extend(value.iter().cloned());
         bytes.extend("".as_bytes().iter().cloned());
@@ -33,9 +33,9 @@ impl TagValue {
         TagValue{tag: tag_val, value: value_vec, bytes: bytes}
     }
 
-    pub fn init(&mut self, tag_val: Tag, value: &[u8]) {
+    pub fn init(&mut self, tag_val: u32, value: &[u8]) {
         let mut bytes: Vec<u8> = vec![];
-        bytes.extend(tag_val.val_str().as_bytes().iter().cloned());
+        bytes.extend(tag_val.to_string().as_bytes().iter().cloned());
         bytes.extend("=".as_bytes().iter().cloned());
         bytes.extend(value.iter().cloned());
         bytes.extend("".as_bytes().iter().cloned());
@@ -69,7 +69,7 @@ impl TagValue {
         let mut value_vec: Vec<u8> = vec![];
         value_vec.extend(value_bytes);
 
-        Ok(TagValue{tag: Tag::new(tag_num), value: value_vec, bytes: bytes})
+        Ok(TagValue{tag: tag_num, value: value_vec, bytes: bytes})
     }
 
     pub fn len(self:TagValue) -> usize {
@@ -87,7 +87,7 @@ mod test {
     fn new_test() {
         let expected_value= "blahblah".as_bytes();
         let expected_data= "8=blahblah".as_bytes();
-        let tag_value = TagValue::new(Tag::new_with_define_tag(Tags::BeginString), expected_value);
+        let tag_value = TagValue::new(Tags::BeginString.to_num(), expected_value);
         assert_eq!(expected_value, tag_value.value.as_slice());
         assert_eq!(expected_data, tag_value.bytes.as_slice());
     }
@@ -95,11 +95,12 @@ mod test {
     #[test]
     fn init_test() {
         let expected_value= "blahblah".as_bytes();
-        let tag = Tag::new_with_define_tag(Tags::BeginString);
-        let mut tag_value = TagValue::new(tag, expected_value);
+
+        let tag = Tags::BeginString;
+        let mut tag_value = TagValue::new(u32::from(tag), expected_value);
 
         let expected_data= "8=blahblah".as_bytes();
-        tag_value.init(tag, expected_value);
+        tag_value.init(tag.into(), expected_value);
         assert_eq!(expected_value, tag_value.value.as_slice());
         assert_eq!(expected_data, tag_value.bytes.as_slice());
     }

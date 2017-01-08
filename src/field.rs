@@ -19,7 +19,7 @@ pub trait FieldValue : FieldValueWriter + FieldValueReader {
 
 //FieldWriter is an interface for a writing a field
 pub trait FieldWriter : FieldValueWriter {
-    fn tag(&self) -> Tag;
+    fn tag(&self) -> u32;
 }
 
 //Field is the interface implemented by all typed Fields in a Message
@@ -28,19 +28,19 @@ pub trait FieldInterface : FieldWriter + FieldValueReader {
 
 //FieldGroupWriter is an interface for writing a FieldGroup
 pub trait FieldGroupWriter {
-    fn tag(&self) -> Tag;
+    fn tag(&self) -> u32;
     fn write(&self) -> [TagValue];
 }
 
 //FieldGroupReader is an interface for reading a FieldGroup
 pub trait FieldGroupReader {
-    fn tag(&self) -> Tag;
+    fn tag(&self) -> u32;
     fn read(&self, tag_value:&[TagValue]) -> Result<&[TagValue], FixError>;
 }
 
 //FieldGroup is the interface implemented by all typed Groups in a Message
 pub trait FieldGroup {
-    fn tag(&self) -> Tag;
+    fn tag(&self) -> u32;
     fn write(&self) -> [TagValue];
     fn read(&self, tag_value:&[TagValue]) -> Result<&[TagValue], FixError>;
 }

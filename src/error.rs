@@ -76,7 +76,7 @@ impl std::fmt::Display for FixError {
 
 trait MessageRejectError : std::error::Error {
     fn reject_reason(&self) -> Reject;
-    fn ref_tag_id(&self) -> &Tag;
+    fn ref_tag_id(&self) -> u32;
     fn is_business_reject(&self) -> bool;
 }
 
@@ -93,32 +93,32 @@ pub mod error {
     pub struct MessageRejectError {
         reject_reason: Reject,
         description: String,
-        ref_tag_id: Tag,
+        ref_tag_id: u32,
         id_business_reject: bool
     }
 
     impl MessageRejectError {
 
-        pub fn new_message_reject_error(err: String, reject_reason: Reject, ref_tag_id: Tag) -> MessageRejectError {
+        pub fn new_message_reject_error(err: String, reject_reason: Reject, ref_tag_id: u32) -> MessageRejectError {
             MessageRejectError{description: err, reject_reason: reject_reason, ref_tag_id: ref_tag_id, id_business_reject: false}
         }
 
-        pub fn new_business_message_reject_error(err: String, reject_reason: Reject, ref_tag_id: Tag) -> MessageRejectError {
+        pub fn new_business_message_reject_error(err: String, reject_reason: Reject, ref_tag_id: u32) -> MessageRejectError {
             MessageRejectError{description: err, reject_reason: reject_reason, ref_tag_id: ref_tag_id, id_business_reject: true}
         }
 
-        pub fn conditionally_required_field_missing(tag:Tag) -> MessageRejectError {
+        pub fn conditionally_required_field_missing(tag:u32) -> MessageRejectError {
             Self::new_message_reject_error(format!("Conditionally Required Field Missing {}", tag), Reject::ConditionallyRequiredFieldMissing, tag)
         }
 
-        pub fn incorrect_data_format_for_value(tag:Tag) -> MessageRejectError {
+        pub fn incorrect_data_format_for_value(tag:u32) -> MessageRejectError {
             Self::new_message_reject_error("Incorrect data format for value".to_string(), Reject::IncorrectDataFormatForValue, tag)
         }
     }
 
     impl super::MessageRejectError for MessageRejectError {
         fn reject_reason(&self) -> Reject { self.reject_reason }
-        fn ref_tag_id(&self) -> &Tag { &self.ref_tag_id }
+        fn ref_tag_id(&self) -> u32 { self.ref_tag_id }
         fn is_business_reject(&self) -> bool { self.id_business_reject }
     }
 

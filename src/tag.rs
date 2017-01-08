@@ -3,37 +3,17 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result;
 
-#[derive(Debug, Copy, Clone)]
-pub struct Tag {
-  value:u32
+pub trait Tag {
+
+  fn is_trailer(&self) -> bool;
+  fn is_header(&self) -> bool;
 }
 
-impl Display for Tag {
-  fn fmt(&self, f: &mut Formatter) -> Result {
-    write!(f, "({})", self.val())
-  }
-}
 
-impl Tag {
-
-  pub fn new(val:u32) -> Tag {
-    Tag{value:val}
-  }
-
-  pub fn new_with_define_tag(val:Tags) -> Tag {
-    Tag{value:val.to_num()}
-  }
-
-  pub fn val(&self) -> u32 {
-    self.value
-  }
-
-  pub fn val_str(&self) -> String {
-    self.value.to_string()
-  }
+impl Tag for u32 {
 
   fn is_trailer(&self) -> bool {
-      if let Some(tag) = Tags::from_number(self.value) {
+      if let Some(tag) = Tags::from_number(*self) {
           let result = match tag {
             Tags::SignatureLength => true,
             Tags::Signature => true,
@@ -46,7 +26,7 @@ impl Tag {
   }
 
   fn is_header(&self) -> bool {
-      if let Some(tag) = Tags::from_number(self.value) {
+      if let Some(tag) = Tags::from_number(*self) {
           let result = match tag {
             Tags::BeginString => true,
             Tags::BodyLength => true,
@@ -165,11 +145,16 @@ impl Tags {
   }
 }
 
-
 impl Display for Tags {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "({})", *self)
     }
+}
+
+impl From<Tags> for u32 {
+  fn from(tag:Tags) -> Self {
+      tag.to_num()
+  }
 }
 
 #[cfg(test)]
@@ -180,14 +165,14 @@ mod test {
   #[test]
   fn is_trailer_test() {
 
-      let tag = Tag::new_with_define_tag(Tags::CheckSum);
-      assert!(tag.is_trailer());
+      let tag = Tags::CheckSum;
+      assert!(tag.to_num().is_trailer());
   }
 
   #[test]
   fn is_header_test() {
-      let tag = Tag::new_with_define_tag(Tags::HopCompID);
-      assert!(tag.is_header());
+      let tag = Tags::HopCompID;
+      assert!(tag.to_num().is_header());
   }
 
   #[test]
