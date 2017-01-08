@@ -2,21 +2,8 @@ use std::*;
 use field::*;
 use error::{FixBooleanParseError, FixError};
 
-pub struct FIXBoolean {
-    value: bool
-}
 
-impl FIXBoolean {
-    pub fn new() -> FIXBoolean {
-        FIXBoolean{value:true}
-    }
-
-    pub fn into(self) -> bool {
-        self.value
-    }
-}
-
-impl FieldValueReader for FIXBoolean {
+impl FieldValueReader for bool {
     fn read(&mut self, value: &[u8]) -> Result<(), FixError> {
         let mut values: Vec<u8> = vec![];
         values.extend(value.iter().cloned());
@@ -27,17 +14,17 @@ impl FieldValueReader for FIXBoolean {
         };
 
         match bool_string.as_str() {
-            "Y" => self.value = true,
-            "N" => self.value = false,
+            "Y" => *self = true,
+            "N" => *self = false,
             _ => return Err(FixError::BooleanParseError(FixBooleanParseError::new(bool_string)))
         }
         Ok(())
     }
 }
 
-impl FieldValueWriter for FIXBoolean {
+impl FieldValueWriter for bool {
     fn write(&self) -> Vec<u8> {
-        if self.value {
+        if *self {
             "Y".to_string().into_bytes()
         }else
         {

@@ -7,6 +7,8 @@ use error::error::MessageRejectError;
 use fix_string::*;
 use fix_boolean::*;
 use fix_int::*;
+use time::*;
+use fix_utc_timestamp::*;
 
 pub struct Field {
      field: Vec<TagValue>
@@ -134,6 +136,14 @@ impl FieldMap {
         self.set_bytes(tag, value.write().as_ref());
     }
 
+    fn set_bool(&mut self, tag:u32, value:bool) {
+        self.set_bytes(tag, value.write().as_ref());
+    }
+
+    fn set_time(&mut self, tag:u32, value:Tm) {
+        self.set_bytes(tag, FIXUTCTimestamp::new(value).write().as_ref());
+    }
+
     fn set_string(&mut self, tag:u32, value:&str) {
         self.set_bytes(tag, value.as_ref());
     }
@@ -144,7 +154,7 @@ impl FieldMap {
     }
 
     fn get_string(&self, tag:u32) -> Result<String, MessageRejectError> {
-        let mut value = FIXString::new();
+        let mut value = String::new();
         {
             let value_mutable = &mut value;
             match self.get_field(tag, value_mutable) {
@@ -155,8 +165,8 @@ impl FieldMap {
         Ok(value.into())
     }
 
-    fn get_boolean(&self, tag:u32) -> Result<bool, MessageRejectError> {
-        let mut value = FIXBoolean::new();
+    fn get_bool(&self, tag:u32) -> Result<bool, MessageRejectError> {
+        let mut value = false;
         {
             let value_mutable = &mut value;
             match self.get_field(tag, value_mutable) {
@@ -178,6 +188,18 @@ impl FieldMap {
         }
         Ok(value)
     }
+
+    fn get_time(&self, tag:u32) -> Result<Tm, MessageRejectError> {
+        let mut value = FIXUTCTimestamp::empty();
+        {
+            let value_mutable = &mut value;
+            match self.get_field(tag, value_mutable) {
+                Err(e) => return Err(e),
+                _ => true
+            };
+        }
+        Ok(value.into())
+    }
 }
 
 #[cfg(test)]
@@ -186,6 +208,8 @@ mod test {
     use super::*;
     use tag_value::*;
     use tag::*;
+    use time::*;
+
     #[test]
     fn add_test() {
         let mut field_map = FieldMap::new();
@@ -195,6 +219,7 @@ mod test {
         let field_count = field_map.tags().len();
         assert_eq!(1, field_count);
     }
+
     #[test]
     fn get_string_test() {
         let mut field_map = FieldMap::new();
@@ -203,22 +228,25 @@ mod test {
         field_map.add(Field{field: vec![tag_value]});
         assert_eq!("blahblah", field_map.get_string(Tags::BeginString.into()).unwrap());
     }
+
     #[test]
     fn get_string_true_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "Y".as_bytes();
         let tag_value = TagValue::new(Tags::PossDupFlag.into(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!(true, field_map.get_boolean(Tags::PossDupFlag.into()).unwrap());
+        assert_eq!(true, field_map.get_bool(Tags::PossDupFlag.into()).unwrap());
     }
+
     #[test]
     fn get_string_false_test() {
         let mut field_map = FieldMap::new();
         let expected_value= "N".as_bytes();
         let tag_value = TagValue::new(Tags::PossDupFlag.to_num(), expected_value);
         field_map.add(Field{field: vec![tag_value]});
-        assert_eq!(false, field_map.get_boolean(Tags::PossDupFlag.to_num()).unwrap());
+        assert_eq!(false, field_map.get_bool(Tags::PossDupFlag.to_num()).unwrap());
     }
+
     #[test]
     fn get_int_test() {
         let mut field_map = FieldMap::new();
@@ -227,6 +255,23 @@ mod test {
         field_map.add(Field{field: vec![tag_value]});
         assert_eq!(11, field_map.get_int(Tags::MsgSeqNum.to_num()).unwrap());
     }
+
+    #[test]
+    fn set_bool_test() {
+        let mut field_map = FieldMap::new();
+        let expected_value = true;
+        field_map.set_bool(Tags::PossDupFlag.to_num(),expected_value);
+        assert_eq!(expected_value, field_map.get_bool(Tags::PossDupFlag.to_num()).unwrap());
+    }
+
+    #[test]
+    fn set_time_test() {
+        let expected_value = now_utc();
+        let mut field_map = FieldMap::new();
+        field_map.set_time(Tags::SendingTime.to_num(),expected_value);
+        assert_eq!(expected_value.to_timespec(), field_map.get_time(Tags::SendingTime.to_num()).unwrap().to_timespec());
+    }
+
     #[test]
     fn get_negative_int_test() {
         let mut field_map = FieldMap::new();
@@ -235,6 +280,7 @@ mod test {
         field_map.add(Field{field: vec![tag_value]});
         assert_eq!(-2, field_map.get_int(Tags::MsgSeqNum.to_num()).unwrap());
     }
+
     #[test]
     fn typed_set_and_get() {
         let mut field_map = FieldMap::new();

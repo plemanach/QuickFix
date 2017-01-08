@@ -6,3 +6,4 @@ authors = ["Le Manach Patrice <plemanach@hotmail.com>"]
 [dependencies]
 enum_primitive="*"
 num="*"
+time="*"

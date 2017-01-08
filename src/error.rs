@@ -2,6 +2,7 @@ use tag::*;
 use std::{string, fmt};
 use std;
 use std::error::Error;
+use time::*;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Reject {
@@ -49,7 +50,8 @@ pub enum FixError {
     Error(fmt::Error),
     IntError(std::num::ParseIntError),
     FromUtf8Error(string::FromUtf8Error),
-    BooleanParseError(FixBooleanParseError)
+    BooleanParseError(FixBooleanParseError),
+    TimeParseError(ParseError)
 }
 
 impl std::error::Error for FixError {
@@ -59,6 +61,7 @@ impl std::error::Error for FixError {
             FixError::IntError(ref err) => err.description(),
             FixError::FromUtf8Error(ref err) => err.description(),
             FixError::BooleanParseError(ref err) => err.description(),
+            FixError::TimeParseError(ref err) => err.description(),
         }
     }
 }
@@ -69,7 +72,8 @@ impl std::fmt::Display for FixError {
             FixError::Error(ref err) => write!(f, "({})", self.description()),
             FixError::IntError(ref err) => write!(f, "({})", err.description()),
             FixError::FromUtf8Error(ref err) => write!(f, "({})", self.description()),
-            FixError::BooleanParseError(ref err) => write!(f, "({})", self.description())
+            FixError::BooleanParseError(ref err) => write!(f, "({})", self.description()),
+            FixError::TimeParseError(ref err) => write!(f, "({})", self.description())
         }
     }
 }
